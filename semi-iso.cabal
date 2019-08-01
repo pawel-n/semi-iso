@@ -1,5 +1,5 @@
 name:                semi-iso
-version:             1.0.0.0
+version:             1.0.0.1
 synopsis:            Weakened partial isomorphisms, reversible computations.
 description:         
   Semi-isomorphisms are partial isomorphisms with weakened iso laws. They are a basic

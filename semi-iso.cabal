@@ -1,5 +1,5 @@
 name:                semi-iso
-version:             1.0.0.0
+version:             1.0.0.1
 synopsis:            Weakened partial isomorphisms, reversible computations.
 description:         
   Semi-isomorphisms are partial isomorphisms with weakened iso laws. They are a basic
@@ -58,7 +58,7 @@ Tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.3, GHC==8.6.1
 
 source-repository head
   type:     git
-  location: git@github.com:Pawel834/semi-iso.git
+  location: https://github.com/pavelchristof/semi-iso
 
 library
   exposed-modules:     Control.Lens.SemiIso

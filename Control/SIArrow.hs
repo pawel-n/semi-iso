@@ -45,7 +45,7 @@ import Data.Semigroupoid.Dual
 import Prelude hiding (id, (.))
 
 infixr 1 ^>>, ^<<, #>>, #<<
-infixr 1 >>^, <<^, >>#, <<#
+infixl 1 >>^, <<^, >>#, <<#
 infixl 4 /$/
 infixl 5 /*/, */, /*
 infixl 3 /?/

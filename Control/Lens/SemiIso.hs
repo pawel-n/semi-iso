@@ -33,7 +33,7 @@ Our semi-isomorphisms will obey weakened laws:
 
 When you see an "Either String a", the String is usually an error message.
 
-Disclaimer: the name "semi-isomorphism" is fictitious and made up for this library. 
+Disclaimer: the name "semi-isomorphism" is fictitious and made up for this library.
 Any resemblance to known mathematical objects of the same name is purely coincidental.
 -}
 module Control.Lens.SemiIso (
@@ -64,6 +64,8 @@ module Control.Lens.SemiIso (
     unit,
     swapped,
     associated,
+    morphed,
+    reorderMorphed,
     constant,
     exact,
     bifiltered,
@@ -101,6 +103,7 @@ import Control.Category
 import Control.Category.Structures
 import Control.Lens.Internal.SemiIso
 import Control.Lens.Iso
+import Control.Tuple.Morph
 import Data.Foldable
 import Data.Functor.Identity
 import Data.Profunctor.Exposed
@@ -108,15 +111,15 @@ import Data.Traversable
 import Prelude hiding (id, (.))
 
 -- | A semi-isomorphism is a partial isomorphism with weakened laws.
--- 
+--
 -- Should satisfy laws:
--- 
+--
 -- > apply i   >=> unapply i >=> apply i   = apply i
 -- > unapply i >=> apply i   >=> unapply i = unapply i
 --
 -- Every 'Prism' is a 'SemiIso'.
 -- Every 'Iso' is a 'Prism'.
-type SemiIso s t a b = forall p f. (Exposed (Either String) p, Traversable f) 
+type SemiIso s t a b = forall p f. (Exposed (Either String) p, Traversable f)
                      => p a (f b) -> p s (f t)
 
 -- | Non-polymorphic variant of 'SemiIso'.
@@ -198,8 +201,8 @@ unapply :: ASemiIso s t a b -> b -> Either String t
 unapply (SemiIso _ bt) = bt
 
 -- | Extracts the two functions that characterize the 'SemiIso'.
-withSemiIso :: ASemiIso s t a b 
-            -> ((s -> Either String a) -> (b -> Either String t) -> r) 
+withSemiIso :: ASemiIso s t a b
+            -> ((s -> Either String a) -> (b -> Either String t) -> r)
             -> r
 withSemiIso ai k = case ai (Retail Right (Right . Identity)) of
                         Retail sa bt -> k sa (rmap (runIdentity . sequenceA) bt)
@@ -219,6 +222,25 @@ unit = iso (, ()) fst
 -- | Products are associative.
 associated :: Iso' (a, (b, c)) ((a, b), c)
 associated = iso (\(a, (b, c)) -> ((a, b), c)) (\((a, b), c) -> (a, (b, c)))
+
+-- | An isomorphism between two arbitrary nested tuples, as long the contained
+-- types (ignoring units!) read from left to right are the same.
+--
+-- This is implemented using 'Data.Tuple.Morph.morph' from 'tuple-morph'.
+morphed :: (TupleMorphable a c, TupleMorphable b c)
+        => Iso' a b
+morphed = iso morphTuples morphTuples
+
+-- | Like @morphed@ but also reorders elements if uniquely defined.
+reorderMorphed
+    :: (  TupleMorphable a b
+        , TupleMorphable c d
+        , ReorderList b d
+        , ReorderList d b
+        , CheckListsForTupleIso b d
+        , CheckListsForTupleIso d b)
+    => Iso' a c
+reorderMorphed = iso morphReorderTuples morphReorderTuples
 
 -- | \-> Always returns the argument.
 --
@@ -374,7 +396,7 @@ bifoldr = bifoldr_ . attemptAp_
 
 -- | Constructs a bidirectional fold. Works with prisms.
 --
--- \-> Right unfolds using the (->) part of the given semi-iso, until it fails. 
+-- \-> Right unfolds using the (->) part of the given semi-iso, until it fails.
 -- It should produce a non-empty list.
 --
 -- \<- Right folds a non-empty list using the (<-) part of the given semi-iso.
@@ -391,7 +413,7 @@ bifoldl = bifoldl_ . attemptAp_
 
 -- | Constructs a bidirectional fold. Works with prisms.
 --
--- \-> Left unfolds using the (->) part of the given semi-iso, until it fails. 
+-- \-> Left unfolds using the (->) part of the given semi-iso, until it fails.
 -- It should produce a non-empty list.
 --
 -- \<- Left folds a non-empty list using the (<-) part of the given semi-iso.

@@ -67,6 +67,7 @@ library
                        Control.Category.Reader
                        Control.Category.Structures
                        Data.Profunctor.Exposed
+                       Control.Tuple.Morph
   build-depends:       base          >= 4.9 && <4.13
                      , profunctors   == 5.*
                      , transformers

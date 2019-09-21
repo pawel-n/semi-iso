@@ -21,7 +21,7 @@ module Control.SIArrow (
     (#>>), (>>#), (#<<), (<<#),
 
     -- * Functor and applicative.
-    (/$/), (/*/), (/*), (*/),
+    (/$/), (/$~), (/$<~>), (/*/), (/*), (*/),
 
     -- * Signaling errors.
     sifail, (/?/),
@@ -41,12 +41,13 @@ import Control.Lens.Empty
 import Control.Lens.Iso
 import Control.Lens.SemiIso
 import Control.Monad
+import Control.Tuple.Morph
 import Data.Semigroupoid.Dual
 import Prelude hiding (id, (.))
 
 infixr 1 ^>>, ^<<, #>>, #<<
 infixr 1 >>^, <<^, >>#, <<#
-infixl 4 /$/
+infixl 4 /$/, /$~
 infixl 5 /*/, */, /*
 infixl 3 /?/
 
@@ -140,6 +141,30 @@ a <<# f = a . sipure f
 -- The analogue of '<$>' and synonym for '#<<'.
 (/$/) :: SIArrow cat => ASemiIso' b' b -> cat a b -> cat a b'
 (/$/) = (#<<)
+
+-- | Convenient fmap.
+--
+-- > ai /$~ f = ai . morphed /$/ f
+--
+-- This operator handles all the hairy stuff with uncurried application:
+-- it reassociates the argument tuple and removes unnecessary (or adds necessary)
+-- units to match the function type. You don't have to use @/*@ and @*/@ with this
+-- operator.
+(/$~) :: (SIArrow cat, TupleMorphable b u, TupleMorphable b' u)
+       => ASemiIso' a b' -> cat c b -> cat c a
+ai /$~ h = cloneSemiIso ai . morphed /$/ h
+
+-- | Like @/$~@ but also reorders elements if uniquely defined.
+(/$<~>)
+    :: (  SIArrow cat
+        , TupleMorphable b u
+        , TupleMorphable b' v
+        , ReorderList u v
+        , ReorderList v u
+        , CheckListsForTupleIso u v
+        , CheckListsForTupleIso v u)
+       => ASemiIso' a b' -> cat c b -> cat c a
+ai /$<~> h = cloneSemiIso ai . reorderMorphed /$/ h
 
 -- | The product of two arrows with duplicate units removed. Side effect are
 -- sequenced from left to right.
